@@ -11,7 +11,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)  // 用户名或邮箱一般要唯一
+    @Column(unique = true)
     private String username;
 
     @Column(unique = true)
@@ -21,8 +21,6 @@ public class User {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    // 可根据需求扩展更多字段：role, bio, profilePictureUrl, etc.
 
     @PrePersist
     protected void onCreate() {
@@ -42,8 +40,6 @@ public class User {
         this.email = email;
         this.password = password;
     }
-
-    // Getter & Setter ...
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
