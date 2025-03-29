@@ -20,5 +20,6 @@
 
         <mapping class="com.csye6220.shareonline.model.Post" />
         <mapping class="com.csye6220.shareonline.model.User" />
+        <mapping class="com.csye6220.shareonline.model.Comment"/>
     </session-factory>
 </hibernate-configuration>

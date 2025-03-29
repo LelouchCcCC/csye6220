@@ -21,17 +21,15 @@ public class UserService {
             throw new RuntimeException("Email already registered.");
         }
 
-        // 2) （可选）加密密码, 这里简化为原文
+        // 2) TODO: encode here
         String hashedPassword = password;
-        // 生产环境请用 BCrypt, Argon2 等
 
-        // 3) 保存用户
         User newUser = new User(username, email, hashedPassword);
         return userDAO.saveOrUpdateUser(newUser);
     }
 
     /**
-     * 用户登录
+     * login
      */
     public String loginUser(String email, String password) {
         System.out.println(email);
@@ -41,22 +39,20 @@ public class UserService {
             throw new RuntimeException("Invalid email or password.");
         }
 
-        // 比对密码（这里直接比对原文）
+        // using raw comparation temperatily
         if (!user.getPassword().equals(password)) {
             throw new RuntimeException("Wrong password.");
         }
 
-        // 如果登录成功，可以生成 JWT (示例)
+        // TODO: use JWT later
         String token = generateJwtToken(user);
         return token;
     }
 
-    /**
-     * 生成 JWT (简化示例)
+    /** TODO:
+     * JWT
      */
     private String generateJwtToken(User user) {
-        // 使用常见的 JWT 库(如 io.jsonwebtoken.Jwts) 进行签发
-        // 这里只是演示返回一个字符串
-        return "fake-jwt-token-for-user-" + user.getId();
+        return "JWT:" + user.getId();
     }
 }
