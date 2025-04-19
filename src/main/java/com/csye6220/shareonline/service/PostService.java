@@ -4,6 +4,7 @@ import com.csye6220.shareonline.dao.PostDAO;
 import com.csye6220.shareonline.model.Post;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -56,5 +57,15 @@ public class PostService {
 
     public List<Post> getPostsByUsername(String username) {
         return postDAO.getPostsByUsername(username);
+    }
+
+    public List<Post> getPostsPaginated(int page, int size) {
+        List<Post> all = postDAO.getAllPosts();
+        int from = page * size;
+        if (from >= all.size()) {
+            return Collections.emptyList();
+        }
+        int to = Math.min(from + size, all.size());
+        return all.subList(from, to);
     }
 }
