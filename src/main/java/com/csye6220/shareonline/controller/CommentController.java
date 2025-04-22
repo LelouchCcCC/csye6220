@@ -4,6 +4,7 @@ import com.csye6220.shareonline.model.Comment;
 import com.csye6220.shareonline.model.Post;
 import com.csye6220.shareonline.service.CommentService;
 import com.csye6220.shareonline.service.PostService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,60 +14,43 @@ import java.util.List;
 @RequestMapping("/api/comments")
 public class CommentController {
 
-    @Autowired
-    private CommentService commentService;
+    @Autowired private CommentService commentService;
+    @Autowired private PostService    postService;
 
-    @Autowired
-    private PostService postService;
-
-    /**
-     * create post
-     */
+    /** create comment */
     @PostMapping
-    public String createComment(@RequestParam Long postId,
-                                @RequestParam Long userId,
-                                @RequestParam(required = false) Long parentCommentId,
-                                @RequestParam String content) {
-        Post post = postService.getPostById(postId);
+    public Comment createComment(@RequestBody CommentDto dto, HttpSession session) {
+        Long uid = (Long) session.getAttribute("uid");
+        if (uid == null) throw new RuntimeException("Not login");
 
-        Comment parent = null;
-        if (parentCommentId != null) {
-            parent = commentService.getNestedCommentsByPost(postId) // or commentService.getCommentById(...)
-                    .stream()
-                    .filter(c -> c.getId().equals(parentCommentId))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Parent comment not found."));
-        }
+        Post post = postService.getPostById(dto.postId());
 
-        Comment newComment = new Comment(content, userId, post, parent);
-        commentService.createComment(newComment);
+        Comment parent = dto.parentCommentId() == null ? null :
+                commentService.findById(dto.parentCommentId())
+                        .orElseThrow(() -> new RuntimeException("Parent comment not found"));
 
-        return "Comment created successfully.";
+        Comment c = new Comment(dto.content(), uid, post, parent);
+        return commentService.createComment(c);
     }
 
-    /**
-     * get nested comments in this post
-     */
+    /** DTO for comment */
+    public record CommentDto(Long postId, Long parentCommentId, String content) {}
+
+    /** get nested comment tree */
     @GetMapping("/post/{postId}")
     public List<Comment> getNestedComments(@PathVariable Long postId) {
         return commentService.getNestedCommentsByPost(postId);
     }
 
-    /**
-     * delete one comment(also his children)
-     */
+    /** delete one comment, will delete all sub comment under it */
     @DeleteMapping("/{commentId}")
-    public String deleteComment(@PathVariable Long commentId) {
+    public void deleteComment(@PathVariable Long commentId) {
         commentService.deleteComment(commentId);
-        return "Comment with id " + commentId + " deleted.";
     }
 
-    /**
-     * delete one post comments
-     */
+    /** delete whole comment */
     @DeleteMapping("/post/{postId}")
-    public String deleteAllCommentsForPost(@PathVariable Long postId) {
+    public void deleteAllCommentsForPost(@PathVariable Long postId) {
         commentService.deleteAllCommentsByPost(postId);
-        return "All comments for post " + postId + " deleted.";
     }
 }

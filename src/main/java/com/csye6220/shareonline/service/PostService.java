@@ -20,6 +20,10 @@ public class PostService {
         return postDAO.getAllPosts();
     }
 
+    public List<Post> getLatestPosts(int offset, int limit) {
+        return postDAO.findLatest(offset, limit);
+    }
+
     public Post getPostById(Long postId) {
         Post post = postDAO.getPostById(postId);
         if (post == null) {
@@ -57,4 +61,13 @@ public class PostService {
     public List<Post> getPostsByUsername(String username) {
         return postDAO.getPostsByUsername(username);
     }
+
+    public List<Post> getPostsByUserId(Long uid) {
+        return postDAO.getPostsByUserId(uid);
+    }
+
+    public List<Post> getPostsByCategory(String c,int off,int lim){
+        return postDAO.findByCategory(c,off,lim);
+    }
+
 }

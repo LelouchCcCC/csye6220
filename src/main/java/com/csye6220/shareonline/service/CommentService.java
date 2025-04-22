@@ -9,55 +9,32 @@ import java.util.*;
 @Service
 public class CommentService {
 
-    private final CommentDAO commentDAO = new CommentDAO();
+    private final CommentDAO dao = new CommentDAO();
 
-    public void createComment(Comment comment) {
-        commentDAO.saveOrUpdateComment(comment);
+    public Comment createComment(Comment c) {
+        return dao.saveOrUpdateComment(c);
     }
 
-    /**
-     * get nested comments in this post id
-     */
+    public Optional<Comment> findById(Long id) {
+        return dao.findById(id);
+    }
+
+    /** 构建嵌套树 */
     public List<Comment> getNestedCommentsByPost(Long postId) {
-        // 1) get all comments within this post
-        List<Comment> allComments = commentDAO.findAllByPostId(postId);
+        List<Comment> flat = dao.findAllByPostId(postId);
 
-        // 2) use map to store id in comments
-        Map<Long, Comment> commentMap = new HashMap<>();
-        for (Comment c : allComments) {
-            commentMap.put(c.getId(), c);
-            c.getReplies().clear();
+        Map<Long, Comment> map = new HashMap<>();
+        flat.forEach(c -> { map.put(c.getId(), c); c.getReplies().clear(); });
+
+        List<Comment> roots = new ArrayList<>();
+        for (Comment c : flat) {
+            Comment p = c.getParent();
+            if (p == null) roots.add(c);
+            else map.get(p.getId()).getReplies().add(c);
         }
-
-        List<Comment> topLevel = new ArrayList<>();
-
-        for (Comment c : allComments) {
-            Comment parent = c.getParent();
-            if (parent == null) {
-                // top level cmt
-                topLevel.add(c);
-            } else {
-                // other lvl cmt
-                Comment parentInMap = commentMap.get(parent.getId());
-                if (parentInMap != null) {
-                    parentInMap.getReplies().add(c);
-                }
-            }
-        }
-        return topLevel;
+        return roots;
     }
 
-    /**
-     * delete cmt nestedly
-     */
-    public void deleteComment(Long commentId) {
-        commentDAO.deleteComment(commentId);
-    }
-
-    /**
-     * delete post comments nestedly
-     */
-    public void deleteAllCommentsByPost(Long postId) {
-        commentDAO.deleteAllCommentsByPostId(postId);
-    }
+    public void deleteComment(Long id)               { dao.deleteComment(id); }
+    public void deleteAllCommentsByPost(Long postId) { dao.deleteAllCommentsByPostId(postId); }
 }

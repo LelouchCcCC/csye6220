@@ -6,18 +6,15 @@ import java.util.List;
 
 public class UserDAO extends DAO {
 
-    public User saveOrUpdateUser(User user) {
+    public User saveOrUpdateUser(User u) {
         try {
             begin();
-            getSession().saveOrUpdate(user);
+            getSession().saveOrUpdate(u);
             commit();
-            return user;
+            return u;
         } catch (Exception e) {
-            rollback();
-            throw e;
-        } finally {
-            close();
-        }
+            rollback(); throw e;
+        } finally { close(); }
     }
 
     public User findById(Long id) {

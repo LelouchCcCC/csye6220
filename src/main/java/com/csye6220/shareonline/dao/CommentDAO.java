@@ -4,117 +4,69 @@ import com.csye6220.shareonline.model.Comment;
 import org.hibernate.query.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public class CommentDAO extends DAO {
 
-    /**
-     * save or update
-     */
-    public void saveOrUpdateComment(Comment comment) {
+    /** save/update */
+    public Comment saveOrUpdateComment(Comment c) {
         try {
             begin();
-            getSession().saveOrUpdate(comment);
-            commit();
-        } catch (Exception e) {
-            rollback();
-            throw e;
-        } finally {
-            close();
-        }
-    }
-
-    /**
-     * get cmt by id
-     */
-    public Comment findById(Long commentId) {
-        try {
-            begin();
-            Comment c = getSession().get(Comment.class, commentId);
+            getSession().saveOrUpdate(c);
             commit();
             return c;
         } catch (Exception e) {
-            rollback();
-            throw e;
-        } finally {
-            close();
-        }
+            rollback(); throw e;
+        } finally { close(); }
     }
 
-    /**
-     * get all cmts and date DEC
-     */
+    /** search based on id */
+    public Optional<Comment> findById(Long id) {
+        try {
+            begin();
+            Comment c = getSession().get(Comment.class, id);
+            commit();
+            return Optional.ofNullable(c);
+        } finally { close(); }
+    }
+
+    /** get all comment */
     public List<Comment> findAllByPostId(Long postId) {
         try {
             begin();
-            Query<Comment> query = getSession().createQuery(
-                    "FROM Comment c WHERE c.post.id = :pid ORDER BY c.createdAt ASC",
-                    Comment.class
-            );
-            query.setParameter("pid", postId);
-
-            List<Comment> result = query.list();
-
-            for (Comment c : result) {
-                loadAllReplies(c);
-            }
-
+            Query<Comment> q = getSession().createQuery(
+                    "FROM Comment c WHERE c.post.id = :pid ORDER BY c.createdAt ASC", Comment.class);
+            q.setParameter("pid", postId);
+            List<Comment> list = q.list();
+            list.forEach(this::loadAllReplies);
             commit();
-            return result;
-        } catch (Exception e) {
-            rollback();
-            throw e;
-        } finally {
-            close();
-        }
+            return list;
+        } finally { close(); }
     }
 
-    /**
-     * nested loop getting cmts
-     */
-    private void loadAllReplies(Comment comment) {
-        // lazy loading
-        comment.getReplies().size();
-        for (Comment child : comment.getReplies()) {
-            loadAllReplies(child);
-        }
+    private void loadAllReplies(Comment c) {
+        c.getReplies().size();
+        c.getReplies().forEach(this::loadAllReplies);
     }
 
-    /**
-     * delete one cmt and set Cascade=ALL
-     */
-    public void deleteComment(Long commentId) {
+    /** delete one comment */
+    public void deleteComment(Long id) {
         try {
             begin();
-            Comment c = getSession().get(Comment.class, commentId);
-            if (c != null) {
-                getSession().delete(c);
-            }
+            Comment c = getSession().get(Comment.class, id);
+            if (c != null) getSession().delete(c);
             commit();
-        } catch (Exception e) {
-            rollback();
-            throw e;
-        } finally {
-            close();
-        }
+        } finally { close(); }
     }
 
-    /**
-     * delete all cmts
-     */
     public void deleteAllCommentsByPostId(Long postId) {
         try {
             begin();
-            Query<?> query = getSession().createQuery(
-                    "DELETE FROM Comment c WHERE c.post.id = :pid"
-            );
-            query.setParameter("pid", postId);
-            query.executeUpdate();
+            Query<?> q = getSession().createQuery(
+                    "DELETE FROM Comment c WHERE c.post.id = :pid");
+            q.setParameter("pid", postId);
+            q.executeUpdate();
             commit();
-        } catch (Exception e) {
-            rollback();
-            throw e;
-        } finally {
-            close();
-        }
+        } finally { close(); }
     }
 }
