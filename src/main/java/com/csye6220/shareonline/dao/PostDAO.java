@@ -4,9 +4,6 @@ import com.csye6220.shareonline.model.Post;
 import org.hibernate.query.Query;
 import java.util.List;
 
-/**
- * 针对Post实体的CRUD操作，继承DAO基类
- */
 public class PostDAO extends DAO {
 
     public void savePost(Post post) {
@@ -22,6 +19,20 @@ public class PostDAO extends DAO {
         }
     }
 
+    public List<Post> findLatest(int offset, int limit) {
+        try {
+            begin();
+            Query<Post> q = getSession().createQuery(
+                    "FROM Post p ORDER BY p.createdAt DESC", Post.class);
+            q.setFirstResult(offset).setMaxResults(limit);
+            List<Post> res = q.list();
+            commit();
+            return res;
+        } catch (Exception e) {
+            rollback(); throw e;
+        } finally { close(); }
+    }
+
     public Post getPostById(Long id) {
         try {
             begin();
@@ -35,6 +46,18 @@ public class PostDAO extends DAO {
             close();
         }
     }
+    public List<Post> getPostsByUserId(Long uid) {
+        try {
+            begin();
+            Query<Post> q = getSession().createQuery(
+                    "FROM Post p WHERE p.userId = :uid ORDER BY p.createdAt DESC", Post.class);
+            q.setParameter("uid", uid);
+            List<Post> list = q.list();
+            commit();
+            return list;
+        } finally { close(); }
+    }
+
 
     public List<Post> getAllPosts() {
         try {
@@ -49,6 +72,19 @@ public class PostDAO extends DAO {
         } finally {
             close();
         }
+    }
+
+    public List<Post> findByCategory(String cat,int offset,int limit){
+        try{
+            begin();
+            Query<Post> q=getSession().createQuery(
+                    "FROM Post p WHERE p.category=:c ORDER BY p.createdAt DESC",Post.class);
+            q.setParameter("c",cat);
+            q.setFirstResult(offset).setMaxResults(limit);
+            List<Post> list=q.list();
+            commit();
+            return list;
+        }finally{ close(); }
     }
 
     public void deletePost(Long id) {

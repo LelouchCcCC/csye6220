@@ -8,6 +8,9 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
+/**
+ * base DAO
+ */
 public abstract class DAO {
 
     private static final Configuration cfg = new Configuration();

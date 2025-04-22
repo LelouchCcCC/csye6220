@@ -2,6 +2,7 @@ package com.csye6220.shareonline.service;
 
 import com.csye6220.shareonline.dao.UserDAO;
 import com.csye6220.shareonline.model.User;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -9,50 +10,24 @@ public class UserService {
 
     private final UserDAO userDAO = new UserDAO();
 
-    /**
-     * register new user
-     */
-    public User registerUser(String username, String email, String password) {
-        // 1) check whether username/email is already taken
-        if (userDAO.findByUsername(username) != null) {
-            throw new RuntimeException("Username already taken.");
-        }
-        if (userDAO.findByEmail(email) != null) {
-            throw new RuntimeException("Email already registered.");
-        }
+    /** register user */
+    public User registerUser(String username, String email, String rawPwd) {
+        if (userDAO.findByUsername(username) != null) throw new RuntimeException("Username taken");
+        if (userDAO.findByEmail(email)    != null)    throw new RuntimeException("Email registered");
 
-        // 2) TODO: encode here
-        String hashedPassword = password;
-
-        User newUser = new User(username, email, hashedPassword);
-        return userDAO.saveOrUpdateUser(newUser);
+        String hashed = BCrypt.hashpw(rawPwd, BCrypt.gensalt(12));
+        return userDAO.saveOrUpdateUser(new User(username, email, hashed));
     }
 
-    /**
-     * login
-     */
-    public String loginUser(String email, String password) {
-        System.out.println(email);
-        System.out.println(password);
+    /** login check */
+    public User validateLogin(String email, String rawPwd) {
         User user = userDAO.findByEmail(email);
-        if (user == null) {
-            throw new RuntimeException("Invalid email or password.");
-        }
-
-        // using raw comparation temperatily
-        if (!user.getPassword().equals(password)) {
-            throw new RuntimeException("Wrong password.");
-        }
-
-        // TODO: use JWT later
-        String token = generateJwtToken(user);
-        return token;
+        if (user == null || !BCrypt.checkpw(rawPwd, user.getPassword()))
+            throw new RuntimeException("Invalid email / password");
+        return user;
     }
 
-    /** TODO:
-     * JWT
-     */
-    private String generateJwtToken(User user) {
-        return "JWT:" + user.getId();
+    public User getById(long id) {
+        return userDAO.findById(id);
     }
 }
