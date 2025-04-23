@@ -19,7 +19,7 @@ public class CommentService {
         return dao.findById(id);
     }
 
-    /** 构建嵌套树 */
+    /** create the tree */
     public List<Comment> getNestedCommentsByPost(Long postId) {
         List<Comment> flat = dao.findAllByPostId(postId);
 
